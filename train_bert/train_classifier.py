@@ -47,7 +47,6 @@ def buildtraining(train_df, test_df,save_directory='topic_classifier_model'):
         logging_strategy="epoch"
     )
     labels = train_df["label"].unique()
-    cat = train_df["category"].unique()
     # Create label-to-id and id-to-label mappings
     label2id = {cat[idx]: idx for idx, categ in enumerate(labels)}
     id2label = {idx: cat[idx] for idx, categ in enumerate(labels)}
@@ -81,6 +80,7 @@ def prediction_metrics(test_df,save_directory='topic_classifier_model'):
     tokenized_test = test_dataset.map(tokenize_data, batched=True)
 
     labels=test_df['label'].to_list()
+    cat = test_df["category"].unique()
 
     predict_input = loaded_tokenizer(
         text=tokenized_test['text_data'],
