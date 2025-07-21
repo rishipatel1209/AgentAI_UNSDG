@@ -106,7 +106,7 @@ def prediction_metrics(test_df,save_directory='topic_classifier_model'):
 
 if __name__ == '__main__':
     train_df,test_df=load_training(basepath='training_data/')
-    #buildtraining(train_df, test_df)
+    buildtraining(train_df, test_df)
     prediction_metrics(test_df)
 
     
