@@ -62,7 +62,7 @@ def buildtraining(train_df, test_df,save_directory='topic_classifier_model'):
         eval_dataset=tokenized_test,
         tokenizer=tokenizer,
         data_collator=data_collator,
-        compute_metrics='eval_f1_score'
+        compute_metrics='balanced_accuracy_score'
 
     )
 

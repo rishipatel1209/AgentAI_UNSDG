@@ -194,7 +194,7 @@ unsdg_countries = [
     "Zimbabwe"
 ]
 
-sdg_goals={'poverty':'End poverty in all its forms everywhere','hunger':'Zero Hunger',\
+sdg_goals={'poverty':'End poverty in all its forms everywhere','hunger':'Zero Hunger',
            'health':'Good Health and Well-Being','education':'Quality Education',\
             'gender-equality':'Gender Equality','water-and-sanitation':'Clean Water and Sanitation',\
              'energy':'Affordable and Clean Energy','economic-growth':'Decent Work and Economic Growth',\
