@@ -5,13 +5,13 @@ from langchain_text_splitters import CharacterTextSplitter
 from langchain_text_splitters import SentenceTransformersTokenTextSplitter
 from transformers import DistilBertTokenizer
 from langchain_huggingface import HuggingFaceEmbeddings
-import bs4
+#import bs4
 from constants import *
 from keybert import KeyBERT
 import pandas as pd
 import re
 import json
-from langchain_chroma import Chroma
+#from langchain_chroma import Chroma
 
 
 
@@ -45,7 +45,7 @@ def webprofiler(base='https://www.un.org/sustainabledevelopment/',subpage='',\
         #for k in keywords:
         #    if k[1]<0.45:continue
         #    keyword_list.append(k[0])
-        sents=d.page_content.split('\n')
+        sents=re.split(r'[.!?]+', d.page_content)
         if sents[-1]=="Links":break #End of page
         for s in sents:
             single_sentances=s.split('.')
