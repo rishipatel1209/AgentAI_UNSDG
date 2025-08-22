@@ -17,6 +17,7 @@ import pandas as pd
 import torch.nn.functional as F
 import os
 torch.classes.__path__ = []
+
 class question_model:
     def __init__(self,loaded_tokenizer,loaded_model, llm, df_keys):
         #self.state=StateVector
@@ -48,8 +49,9 @@ class question_model:
         #print(state.get('seed_question').lower())
         predict_input = self.tokenizer(
             text=state.get('seed_question').lower(),
+            max_length=512,
             truncation=True,
-            padding=True,
+            padding='max_length',
             return_tensors="pt")
         #print(predict_input)
         with torch.no_grad():
