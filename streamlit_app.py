@@ -14,6 +14,8 @@ from graph.graph_builder import BuildGraphOptions
 import re
 import os
 import torch
+torch.classes.__path__ = []
+
 device=torch.get_default_device()
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
 class StreamlitConfigUI:
