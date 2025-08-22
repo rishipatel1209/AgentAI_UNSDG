@@ -38,7 +38,8 @@ def buildtraining(train_df, test_df,save_directory='topic_classifier_model'):
     test_dataset = Dataset.from_pandas(test_df)#These are arrow files
     tokenized_train = train_dataset.map(tokenize_data, batched=True)
     tokenized_test = test_dataset.map(tokenize_data, batched=True)
-    data_collator = DataCollatorWithPadding(tokenizer=tokenizer)
+    max_sequence_length = 512
+    data_collator = DataCollatorWithPadding(tokenizer=tokenizer, padding='max_length',max_length=max_sequence_length)
     training_args = TrainingArguments(
         output_dir="./distilbert_results",
         learning_rate=2e-5, #Small learning rate
