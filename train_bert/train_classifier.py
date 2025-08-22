@@ -1,7 +1,9 @@
 from datasets import Dataset
-import numpy as np 
+import numpy as np
 import pandas as pd
-import tensorflow as tf
+#import tensorflow as tf
+import torch.nn.functional as F
+
 #import matplotlib.pyplot as plt
 from sklearn.model_selection import train_test_split
 from transformers import DistilBertTokenizerFast, TFDistilBertForSequenceClassification
@@ -10,6 +12,7 @@ from transformers import AutoModelForSequenceClassification, Trainer, TrainingAr
 from transformers import AutoTokenizer
 import matplotlib.pyplot as plt
 from sklearn.metrics import ConfusionMatrixDisplay
+import torch
 tokenizer = AutoTokenizer.from_pretrained("distilbert-base-uncased")
 
 def load_training(basepath='training_data/'):
@@ -28,7 +31,7 @@ def load_training(basepath='training_data/'):
 
 
 def tokenize_data(examples):
-    return tokenizer(examples["text_data"], truncation=True, padding=True)
+    return tokenizer(examples["text_data"], truncation=True)
 
 def buildtraining(train_df, test_df,save_directory='topic_classifier_model'):
     train_dataset = Dataset.from_pandas(train_df)#These are arrow files
@@ -54,7 +57,7 @@ def buildtraining(train_df, test_df,save_directory='topic_classifier_model'):
     id2label = {idx: cat[idx] for idx, categ in enumerate(labels)}
     # Define Trainer object for training the model
     model = AutoModelForSequenceClassification.from_pretrained("distilbert-base-uncased",
-        num_labels=len(labels),label2id=label2id,id2label=id2label)
+        num_labels=len(labels),label2id=label2id,id2label=id2label, device_map='cpu')
     trainer = Trainer(
         model=model,
         args=training_args,
@@ -75,38 +78,52 @@ def buildtraining(train_df, test_df,save_directory='topic_classifier_model'):
 def prediction_metrics(test_df,save_directory='topic_classifier_model'):
 
     save_directory=save_directory
-    loaded_tokenizer = DistilBertTokenizerFast.from_pretrained(save_directory)
-    loaded_model = TFDistilBertForSequenceClassification.from_pretrained(save_directory)
-    test_text=test_df['text_data'].to_list()
+    loaded_tokenizer = AutoTokenizer.from_pretrained(save_directory)
+    loaded_model = AutoModelForSequenceClassification.from_pretrained(save_directory)
+    #test_text=test_df['text_data'].to_list()
     #test_dataset = Dataset.from_pandas(test_df)#These are arrow files
     #tokenized_test = test_dataset.map(tokenize_data, batched=True)
-    #print(type(tokenized_test['text_data']))
-    #print(tokenized_test['text_data'][0])
-    
+
     labels=test_df['label'].to_list()
     cat = test_df["category"].unique()
-    #for l in tokenized_test['text_data']:print(l)
+
     predict_input = loaded_tokenizer(
-        text=test_text,
+        text=test_df['text_data'].to_list(),
         truncation=True,
         padding=True,
-        return_tensors="tf")
+        return_tensors="pt")
+    with torch.no_grad():
+        logits = loaded_model(**predict_input).logits
+        prob_value=F.softmax(logits, dim=1).cpu().numpy()[0]
+        prediction_value = torch.argmax(logits, dim=1).cpu().numpy()
+        #print(prob_value)
+        accuracy = np.mean(prediction_value == np.array(labels))
+        print(f"\nAccuracy: {accuracy:.4f}")
+        print(classification_report(np.array(labels), prediction_value))
+        cm_display=ConfusionMatrixDisplay.from_predictions(y_true=np.array(labels), y_pred=prediction_value,display_labels=cat)
+        cm_display.ax_.set_xlabel('Predicted Goal Category')
+        cm_display.ax_.set_ylabel('True Label Category')
 
-    output = loaded_model(predict_input)[0]
-    #print(output)
-    prediction_value = tf.argmax(output, axis=1).numpy()#All answers
-    #print(prediction_value)
-    
-    accuracy = np.mean(prediction_value == np.array(labels))
-    print(f"\nAccuracy: {accuracy:.4f}")
-    print(classification_report(np.array(labels), prediction_value))
-    ConfusionMatrixDisplay.from_predictions(y_true=np.array(labels), y_pred=prediction_value,display_labels=cat)
-    plt.show()
-    
+        binary_labels = [str(i+1) for i in range(len(cat))]
+        print(len(binary_labels))
+        cm_display.ax_.set_xticklabels(binary_labels, rotation='vertical')
+        plt.show()
+def prediction_unit_test(text_query='justice',save_directory='topic_classifier_model'):
+    loaded_tokenizer = AutoTokenizer.from_pretrained(save_directory)
+    loaded_model = AutoModelForSequenceClassification.from_pretrained(save_directory)
+    predict_input = loaded_tokenizer(
+            text=text_query.lower(),
+            truncation=True,
+            padding=True,
+            return_tensors="pt")
+    with torch.no_grad():
+        logits = loaded_model(**predict_input).logits
+        prob_value=F.softmax(logits, dim=1).cpu().numpy()[0]
+        return prob_value
 
 if __name__ == '__main__':
     train_df,test_df=load_training(basepath='training_data/')
     buildtraining(train_df, test_df)
     prediction_metrics(test_df)
-
-    
+    prob=prediction_unit_test()
+    print(prob)
