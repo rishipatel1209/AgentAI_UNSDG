@@ -13,6 +13,8 @@ from graph.state_vector_nodes import question_model,research_model
 from graph.graph_builder import BuildGraphOptions
 import re
 import os
+import torch
+device=torch.get_default_device()
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
 class StreamlitConfigUI:
 
@@ -98,7 +100,7 @@ if __name__=='__main__':
     LLM_Selection=ModelSelection(user_input)
     if user_input["GENAI_API_KEY"]:llm=LLM_Selection.setup_llm_model()
     loaded_tokenizer = AutoTokenizer.from_pretrained('train_bert/topic_classifier_model')
-    loaded_model = AutoModelForSequenceClassification.from_pretrained('train_bert/topic_classifier_model').to_empty(device='cpu')
+    loaded_model = AutoModelForSequenceClassification.from_pretrained('train_bert/topic_classifier_model',device_map=device)
     df_keys=pd.read_csv('train_bert/training_data/Keyword_Patterns.csv')
 
     if not user_input:

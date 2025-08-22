@@ -78,7 +78,7 @@ class question_model:
                 state['messages'].append(AIMessage(content="Missing topic please ask a question about the 17 Sustainable Development Goals. Graph will terminate. \n"))
             state['messages'].append(AIMessage(content="Topics are: %s and keywords found: %s.\n Proceeding to prompt creation. \n" \
                                             %(", ".join(Keywords.keys()), ", ".join([kw for kws in Keywords.values() for kw in kws]))))
-        return state    
+        return state
 
     def should_continue(self, state:StateVector) -> str:
         """Determine whether to continue to prompt creation or terminate"""
@@ -96,7 +96,7 @@ class question_model:
         result = runner.invoke(state['messages'])
 
         #print("Generated Question: %s" %result)
-        
+
         state['questions'] = result
         #ai_response="\n".join(state['questions'])
         #state['messages'].append(AIMessage(content="Generated questions: "+ai_response))
@@ -105,7 +105,7 @@ class question_model:
 class research_model:
     def __init__(self,llm,tavily_api_key):
         self.llm=llm
-        self.local_analysis_file='src/graph/data_analyst_prompts.csv'
+        self.local_analysis_file='graph/data_analyst_prompts.csv'
         self.tool_names=["direct_semantic_scholar_query", "direct_tavily_search" ]
         semantic_scholar_tool = SemanticScholarQueryRun(
             api_wrapper=SemanticScholarAPIWrapper()
@@ -118,12 +118,12 @@ class research_model:
     def direct_semantic_scholar_query(self,query: str):
 
         """Direct invocation of SemanticScholarQueryRun without agent"""
-        
+
         # Create the tool directly
         tool = SemanticScholarQueryRun(
             api_wrapper=SemanticScholarAPIWrapper()
         )
-        
+
         # Invoke the tool directly
         result = tool.invoke(query, k=10, output_parser=JsonOutputParser(), fields=["paperId","title","authors", "url","abstract","year","paperId"],sort="year")
 
@@ -155,7 +155,7 @@ class research_model:
             if df_analyst.shape[0]>0:
                 analysis_prompt.extend(df_analyst['analysis_prompt'].to_list())
         return "\n".join(analysis_prompt)
-    
+
     def create_prompt_template(self,state:StateVector) -> ChatPromptTemplate:
             """
             Creates a prompt template based on the provided questions.
@@ -182,7 +182,7 @@ class research_model:
 
     def tool_calling_agent(self):
         """Show how to bind the tool to LLM using tool calling"""
-        
+
         # Initialize LLM
         '''
         llm = ChatOpenAI(
@@ -198,7 +198,7 @@ class research_model:
         self.tools=[semantic_scholar_tool,self.direct_tavily_search]
         # Bind the tool to the LLM
         llm_with_tools = self.llm.bind_tools(self.tools)
-        
+
         return llm_with_tools,self.tools
 
 
@@ -210,15 +210,15 @@ class research_model:
         Function to summarize the answer from the LLM.
         This is a placeholder function that can be extended to include more complex summarization.
         """
-        
+
         initial_system_message= state["messages"][0] # This is the system message that sets the context for the LLM with the listed questions
         initial_system_message.content += "Please provide a comprehensive answer to the questions. \n"
-        
+
         tool_messages = [msg for msg in state["messages"] if isinstance(msg, ToolMessage)]
         augmented_data=""
         if tool_messages:
             initial_system_message.content += "Use the following information gathered from the tools as reference information: \n"
-            
+
             for tool_msg in tool_messages:
                 print(tool_msg.content, type(tool_msg.content))
                 Label_Source=""
